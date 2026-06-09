@@ -14,11 +14,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import os
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Allow frontend to call this API
+CORS(app, resources={r"/api/*": {"origins": [os.getenv("FRONTEND_ORIGIN", "*")]}})
 
+MODULE1_URL = os.getenv("MODULE1_URL", "https://translator.onrender.com")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
+MODULE2_URL = os.getenv("MODULE2_URL", "https://ticket-manager.onrender.com")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "llama3-8b-8192"
 
@@ -326,5 +329,6 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Module 1 - Translation Service running on http://localhost:5001")
-    app.run(port=5001, debug=True)
+    port = int(os.getenv("PORT", "5003"))
+    print(f"Module 1 - Translation Service running on http://0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False)

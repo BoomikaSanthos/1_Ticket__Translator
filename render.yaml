@@ -1,0 +1,58 @@
+# render.yaml – placed at the repo root
+services:
+  # --------------------------------------------------------------
+  # 1️⃣ Translator service (port 5001)
+  # --------------------------------------------------------------
+  - type: web
+    name: translator
+    runtime: docker
+    env: docker
+    region: oregon               # any free region works
+    dockerfilePath: backend/module1_translator/Dockerfile
+    envVars:
+      - key: PORT
+        value: "5001"
+      # (optional) add your GROQ_API_KEY here if you have one:
+      # - key: GROQ_API_KEY
+      #   fromSecret: groq_api_key
+    healthCheckPath: /api/health
+
+  # --------------------------------------------------------------
+  # 2️⃣ Ticket‑Manager service (port 5002)
+  # --------------------------------------------------------------
+  - type: web
+    name: ticket-manager
+    runtime: docker
+    env: docker
+    region: oregon
+    dockerfilePath: backend/module2_ticket_manager/Dockerfile
+    envVars:
+      - key: PORT
+        value: "5002"
+      - key: DATA_PATH
+        value: "/data/tickets.db"
+    # Attach a free 1 GB persistent disk so the SQLite DB survives restarts
+    disk:
+      name: ticket-data
+      path: /data
+      sizeGB: 1
+    healthCheckPath: /api/health
+
+  # --------------------------------------------------------------
+  # 3️⃣ Orchestrator service (port 5003)
+  # --------------------------------------------------------------
+  - type: web
+    name: orchestrator
+    runtime: docker
+    env: docker
+    region: oregon
+    dockerfilePath: backend/module3_orchestrator/Dockerfile
+    envVars:
+      - key: PORT
+        value: "5003"
+      # URLs of the other two services – Render will resolve these domains
+      - key: MODULE1_URL
+        value: "https://translator.onrender.com"
+      - key: MODULE2_URL
+        value: "https://ticket-manager.onrender.com"
+    healthCheckPath: /api/health

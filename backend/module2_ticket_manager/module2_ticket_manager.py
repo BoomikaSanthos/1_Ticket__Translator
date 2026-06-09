@@ -20,10 +20,10 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": [os.getenv("FRONTEND_ORIGIN", "*")]}})  # restrict CORS
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
-DB_PATH = str(Path(__file__).parent.resolve() / "tickets.db")
+DB_PATH = os.getenv('DATA_PATH', str(Path(__file__).parent.resolve() / "data" / "tickets.db"))
 UPLOAD_FOLDER = str(Path(__file__).parent.resolve() / "uploads")
 ALLOWED_EXTENSIONS = {"txt"}
 
@@ -288,5 +288,6 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Module 2 - Ticket Manager running on http://localhost:5002")
-    app.run(port=5002, debug=True)
+    port = int(os.getenv("PORT", "5002"))
+    print(f"Module 2 - Ticket Manager running on http://0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False)

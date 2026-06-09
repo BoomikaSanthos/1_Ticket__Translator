@@ -1,0 +1,31 @@
+# Python byte‑code / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments (if you ever create one locally)
+venv/
+env/
+ENV/
+.venv/
+
+# OS‑specific files
+.DS_Store
+Thumbs.db
+
+# Local environment files (never commit secret keys)
+.env
+.env.local
+.env.*.local
+
+# SQLite DB – keep it out of the repo (Render uses its own persistent disk)
+tickets.db
+
+# Build artefacts / logs
+*.log
+*.tmp
+*.bak
+
+# Vercel/Render generated files (ignore just in case)
+.vercel/
+.render/

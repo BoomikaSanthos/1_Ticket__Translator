@@ -17,16 +17,17 @@ from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 import requests
 import sqlite3
+import os
 from datetime import datetime
 from pathlib import Path
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": [os.getenv("FRONTEND_ORIGIN", "*")]}})  # restrict CORS
 
 # ── Config: URLs of the other two modules ────────────────────────────────────
 MODULE1_URL = "http://127.0.0.1:5001"   # Translator
 MODULE2_URL = "http://127.0.0.1:5002"   # Ticket Manager
-DB_PATH = str(Path(__file__).parent.resolve() / "tickets.db")
+DB_PATH = str(Path(__file__).parent.resolve() / "tickets.db")  # unchanged, using same DB as manager
 FRONTEND_DIR = Path(__file__).parent.parent.resolve() / "frontend"
 
 
@@ -303,5 +304,6 @@ def serve_frontend(filename):
 
 
 if __name__ == "__main__":
-    print("Module 3 - Orchestrator running on http://localhost:5003")
-    app.run(port=5003, debug=True)
+    port = int(os.getenv("PORT", "5003"))
+    print(f"Module 3 - Orchestrator running on http://0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
