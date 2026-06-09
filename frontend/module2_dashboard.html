@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SD-04 Translator</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+      --accent: #6c63ff; --accent2: #00d4a1; --text: #e8eaf0;
+      --muted: #8b90a0; --danger: #ff6b6b; --warn: #ffa94d;
+      --radius: 12px; --font: 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+    }
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    nav { margin-left: auto; display: flex; gap: 4px; }
+    nav a {
+      color: var(--muted); text-decoration: none; font-size: 14px;
+      padding: 6px 12px; border-radius: 6px; transition: all 0.15s;
+    }
+    nav a:hover, nav a.active { color: var(--text); background: var(--border); }
+
+    main { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .stat-card .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-card .stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+    .stat-card.accent  .stat-value { color: var(--accent); }
+    .stat-card.success .stat-value { color: var(--accent2); }
+    .stat-card.warn    .stat-value { color: var(--warn); }
+    .stat-card.danger  .stat-value { color: var(--danger); }
+
+    /* Filters */
+    .filters {
+      display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+    }
+    select, input[type="search"] {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font); font-size: 14px;
+      padding: 9px 14px; border-radius: 8px; outline: none; transition: border-color 0.15s;
+    }
+    select:focus, input[type="search"]:focus { border-color: var(--accent); }
+    input[type="search"] { flex: 1; min-width: 200px; }
+
+    .btn-sm {
+      padding: 9px 16px; border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-success { background: var(--accent2); color: #000; }
+    .btn-success:hover { opacity: 0.85; }
+
+    /* Table */
+    .table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: rgba(255,255,255,0.03); padding: 12px 16px;
+      text-align: left; font-size: 12px; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(108, 99, 255, 0.05); }
+    tbody td { padding: 14px 16px; font-size: 14px; vertical-align: middle; }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px; text-transform: capitalize;
+    }
+    .badge-new         { background: rgba(108,99,255,0.2); color: var(--accent); }
+    .badge-in_progress { background: rgba(255,169,77,0.2); color: var(--warn); }
+    .badge-resolved    { background: rgba(0,212,161,0.2);  color: var(--accent2); }
+
+    .lang-pill {
+      font-size: 11px; font-weight: 600; padding: 3px 9px;
+      background: rgba(255,255,255,0.06); border-radius: 20px; color: var(--muted);
+    }
+
+    .text-preview { color: var(--muted); font-size: 13px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; width: 580px;
+      max-width: 95vw; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; }
+    .modal-close { cursor: pointer; color: var(--muted); font-size: 20px; }
+    .modal-section { margin-bottom: 18px; }
+    .modal-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+    .modal-text { font-size: 14px; line-height: 1.7; white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 8px; }
+
+    .loading-row td { text-align: center; padding: 40px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Ticket<span>Lens</span></div>
+    <nav>
+      <a href="module1_submit.html">Submit</a>
+      <a href="module2_dashboard.html" class="active">Dashboard</a>
+      <a href="module3_reply.html">Reply</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-header">
+      <h1>Ticket Dashboard</h1>
+      <div style="display:flex;gap:10px">
+        <button class="btn-sm btn-outline" onclick="exportMarkdown()">⬇ Export MD</button>
+        <button class="btn-sm btn-outline" onclick="exportJSON()">⬇ Export JSON</button>
+        <button class="btn-sm btn-success" onclick="loadAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card accent">
+        <div class="stat-label">Total Tickets</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" id="stat-inprog">—</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-label">Resolved</div>
+        <div class="stat-value" id="stat-resolved">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">New / Pending</div>
+        <div class="stat-value" id="stat-new">—</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input type="search" id="search-input" placeholder="Search tickets..." oninput="filterTickets()" />
+      <select id="filter-status" onchange="filterTickets()">
+        <option value="">All Statuses</option>
+        <option value="new">New</option>
+        <option value="in_progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+      <select id="filter-lang" onchange="filterTickets()">
+        <option value="">All Languages</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>File</th>
+            <th>Language</th>
+            <th>Original (preview)</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-tbody">
+          <tr class="loading-row"><td colspan="6">Loading tickets…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-title">
+        <span id="modal-title">Ticket Details</span>
+        <span class="modal-close" onclick="closeModal()">✕</span>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">Original Text</div>
+        <div class="modal-text" id="modal-original"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">English Translation</div>
+        <div class="modal-text" id="modal-translated"></div>
+      </div>
+      <div id="modal-reply-section" style="display:none">
+        <div class="modal-section">
+          <div class="modal-label">Engineer Reply (English)</div>
+          <div class="modal-text" id="modal-reply-en"></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-label">Reply (Customer Language)</div>
+          <div class="modal-text" id="modal-reply-orig"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MODULE2    = "http://127.0.0.1:5002";
+    const ORCHESTR   = "http://127.0.0.1:5003";
+    let allTickets   = [];
+
+    async function loadAll() {
+      try {
+        // Load stats
+        const sResp = await fetch(`${MODULE2}/api/stats`);
+        const stats = await sResp.json();
+        document.getElementById("stat-total").textContent    = stats.total;
+        document.getElementById("stat-inprog").textContent   = stats.by_status?.in_progress || 0;
+        document.getElementById("stat-resolved").textContent = stats.by_status?.resolved     || 0;
+        document.getElementById("stat-new").textContent      = stats.by_status?.new          || 0;
+
+        // Populate language filter
+        const langSelect = document.getElementById("filter-lang");
+        const currentLang = langSelect.value;
+        langSelect.innerHTML = '<option value="">All Languages</option>';
+        Object.keys(stats.by_language || {}).forEach(lang => {
+          const opt = document.createElement("option");
+          opt.value = lang; opt.textContent = `${lang} (${stats.by_language[lang]})`;
+          langSelect.appendChild(opt);
+        });
+        langSelect.value = currentLang;
+
+        // Load tickets
+        const tResp = await fetch(`${MODULE2}/api/tickets`);
+        const tData = await tResp.json();
+        allTickets = tData.tickets;
+        renderTable(allTickets);
+      } catch (e) {
+        document.getElementById("ticket-tbody").innerHTML =
+          `<tr class="loading-row"><td colspan="6">⚠ Could not connect to backend. Make sure Module 2 is running on port 5002.<br><small>${e.message}</small></td></tr>`;
+      }
+    }
+
+    function renderTable(tickets) {
+      const tbody = document.getElementById("ticket-tbody");
+      if (!tickets.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">📭</div><div>No tickets yet. <a href="module1_submit.html" style="color:var(--accent)">Submit one!</a></div></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = tickets.map(t => `
+        <tr onclick="openModal(${t.id})">
+          <td><strong>#${t.id}</strong></td>
+          <td style="font-size:13px;color:var(--muted)">${t.filename || "—"}</td>
+          <td><span class="lang-pill">${t.detected_lang || "?"}</span></td>
+          <td><div class="text-preview">${escHtml(t.original_text)}</div></td>
+          <td><span class="badge badge-${t.status}">${t.status.replace("_", " ")}</span></td>
+          <td style="color:var(--muted);font-size:13px">${t.created_at?.substring(0, 10) || "—"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function filterTickets() {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const status = document.getElementById("filter-status").value;
+      const lang   = document.getElementById("filter-lang").value;
+      const filtered = allTickets.filter(t => {
+        const matchSearch = !search ||
+          t.original_text?.toLowerCase().includes(search) ||
+          t.translated_text?.toLowerCase().includes(search) ||
+          t.filename?.toLowerCase().includes(search);
+        const matchStatus = !status || t.status === status;
+        const matchLang   = !lang   || t.detected_lang === lang;
+        return matchSearch && matchStatus && matchLang;
+      });
+      renderTable(filtered);
+    }
+
+    async function openModal(id) {
+      const resp   = await fetch(`${MODULE2}/api/tickets/${id}`);
+      const data   = await resp.json();
+      const ticket = data.ticket;
+      document.getElementById("modal-title").textContent      = `Ticket #${ticket.id} — ${ticket.detected_lang || "Unknown"}`;
+      document.getElementById("modal-original").textContent   = ticket.original_text    || "—";
+      document.getElementById("modal-translated").textContent = ticket.translated_text  || "(not translated yet)";
+      const hasReply = ticket.reply_english;
+      document.getElementById("modal-reply-section").style.display = hasReply ? "block" : "none";
+      if (hasReply) {
+        document.getElementById("modal-reply-en").textContent   = ticket.reply_english;
+        document.getElementById("modal-reply-orig").textContent = ticket.reply_original;
+      }
+      document.getElementById("modal").classList.add("open");
+    }
+
+    function closeModal() { document.getElementById("modal").classList.remove("open"); }
+
+    function exportMarkdown() { window.open(`${ORCHESTR}/api/export/markdown`, "_blank"); }
+    function exportJSON()     { window.open(`${ORCHESTR}/api/export/json`, "_blank"); }
+
+    function escHtml(s) {
+      return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    loadAll();
+    setInterval(loadAll, 30000); // auto-refresh every 30s
+  </script>
+</body>
+</html>

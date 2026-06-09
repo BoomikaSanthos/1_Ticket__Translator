@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Ticket — SD-04 Translator</title>
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2d3a;
+      --accent:    #6c63ff;
+      --accent2:   #00d4a1;
+      --text:      #e8eaf0;
+      --muted:     #8b90a0;
+      --danger:    #ff6b6b;
+      --success:   #00d4a1;
+      --radius:    12px;
+      --font:      'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header .logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    header .logo span { color: var(--accent); }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    nav a:hover, nav a.active {
+      color: var(--text);
+      background: var(--border);
+    }
+    nav { margin-left: auto; display: flex; gap: 4px; }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 760px;
+      margin: 48px auto;
+      padding: 0 24px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 36px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+
+    /* ── Form ── */
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      padding: 14px 16px;
+      transition: border-color 0.15s;
+      resize: vertical;
+    }
+    textarea:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea { min-height: 160px; }
+
+    .form-group { margin-bottom: 20px; }
+
+    /* ── File drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, 0.05);
+    }
+    .drop-zone .icon { font-size: 36px; margin-bottom: 12px; }
+    .drop-zone p { color: var(--muted); font-size: 14px; }
+    .drop-zone strong { color: var(--text); }
+    #file-input { display: none; }
+    .file-chosen {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--accent2);
+      font-weight: 500;
+    }
+
+    /* ── Button ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .btn-primary:hover { background: #5a52e0; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Result box ── */
+    .result {
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: var(--radius);
+      display: none;
+    }
+    .result.success {
+      background: rgba(0, 212, 161, 0.08);
+      border: 1px solid rgba(0, 212, 161, 0.3);
+    }
+    .result.error {
+      background: rgba(255, 107, 107, 0.08);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+    .result-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    .result.success .result-title { color: var(--success); }
+    .result.error .result-title { color: var(--danger); }
+
+    .result-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .result-row .rkey {
+      color: var(--muted);
+      min-width: 110px;
+      font-weight: 500;
+    }
+    .result-row .rval { color: var(--text); }
+
+    .lang-badge {
+      display: inline-block;
+      background: rgba(108, 99, 255, 0.2);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Ticket<span>Lens</span></div>
+    <nav>
+      <a href="module1_submit.html" class="active">Submit</a>
+      <a href="module2_dashboard.html">Dashboard</a>
+      <a href="module3_reply.html">Reply</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Submit a Ticket</h1>
+    <p class="subtitle">Paste ticket text or upload a .txt file. The AI detects the language and translates to English automatically.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-text" onclick="switchTab('text')">✏️ Paste Text</button>
+      <button class="tab-btn" id="tab-file" onclick="switchTab('file')">📁 Upload File</button>
+    </div>
+
+    <!-- Text Tab -->
+    <div id="panel-text" class="card">
+      <div class="form-group">
+        <label>Ticket Text (any language)</label>
+        <textarea id="ticket-text" placeholder="Paste ticket here in any language — Hindi, Tamil, French, Spanish..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Filename (optional)</label>
+        <input type="text" id="ticket-filename" placeholder="e.g. ticket_001.txt" />
+      </div>
+      <button class="btn btn-primary" id="btn-submit-text" onclick="submitText()">
+        <div class="spinner" id="spinner-text"></div>
+        <span id="btn-text-label">Detect Language & Translate</span>
+      </button>
+    </div>
+
+    <!-- File Tab -->
+    <div id="panel-file" class="card" style="display:none">
+      <input type="file" id="file-input" accept=".txt" onchange="onFileChosen(this)" />
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="onFileDrop(event)">
+        <div class="icon">📄</div>
+        <p><strong>Click to choose</strong> or drag a .txt file here</p>
+        <p>Supports any language</p>
+        <div class="file-chosen" id="file-chosen-name"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-submit-file" onclick="submitFile()" style="margin-top:20px" disabled>
+        <div class="spinner" id="spinner-file"></div>
+        <span id="btn-file-label">Upload & Translate</span>
+      </button>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result-box">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-row"><span class="rkey">Ticket ID</span><span class="rval" id="res-id"></span></div>
+      <div class="result-row"><span class="rkey">Language</span><span class="rval" id="res-lang"></span></div>
+      <div class="result-row"><span class="rkey">Status</span><span class="rval" id="res-status"></span></div>
+      <div class="result-row" style="flex-direction:column;gap:6px">
+        <span class="rkey">English Translation</span>
+        <span class="rval" id="res-translation" style="line-height:1.6;white-space:pre-wrap"></span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const ORCHESTRATOR = "http://127.0.0.1:5003";
+    const MODULE2 = "http://127.0.0.1:5002";
+
+    let chosenFile = null;
+
+    function switchTab(tab) {
+      document.getElementById("panel-text").style.display = tab === "text" ? "block" : "none";
+      document.getElementById("panel-file").style.display = tab === "file" ? "block" : "none";
+      document.getElementById("tab-text").classList.toggle("active", tab === "text");
+      document.getElementById("tab-file").classList.toggle("active", tab === "file");
+    }
+
+    function onFileChosen(input) {
+      if (input.files && input.files[0]) {
+        chosenFile = input.files[0];
+        document.getElementById("file-chosen-name").textContent = "✅ " + chosenFile.name;
+        document.getElementById("btn-submit-file").disabled = false;
+      }
+    }
+
+    function onFileDrop(event) {
+      event.preventDefault();
+      document.getElementById("drop-zone").classList.remove("over");
+      const file = event.dataTransfer.files[0];
+      if (file && file.name.endsWith(".txt")) {
+        chosenFile = file;
+        document.getElementById("file-chosen-name").textContent = "✅ " + file.name;
+        document.getElementById("btn-submit-file").disabled = false;
+      } else {
+        alert("Please drop a .txt file.");
+      }
+    }
+
+    function setLoading(id, loading) {
+      document.getElementById(`spinner-${id}`).style.display = loading ? "inline-block" : "none";
+      document.getElementById(`btn-${id === "text" ? "submit-text" : "submit-file"}`).disabled = loading;
+    }
+
+    function showResult(ticket, isError = false) {
+      const box = document.getElementById("result-box");
+      box.className = "result " + (isError ? "error" : "success");
+      box.style.display = "block";
+
+      if (isError) {
+        document.getElementById("result-title").textContent = "❌ Error";
+        document.getElementById("res-id").textContent = "-";
+        document.getElementById("res-lang").innerHTML = "-";
+        document.getElementById("res-status").textContent = "-";
+        document.getElementById("res-translation").textContent = ticket;
+        return;
+      }
+
+      document.getElementById("result-title").textContent = "✅ Ticket Processed";
+      document.getElementById("res-id").textContent = "#" + ticket.id;
+      document.getElementById("res-lang").innerHTML = `<span class="lang-badge">${ticket.detected_lang || "Unknown"}</span>`;
+      document.getElementById("res-status").textContent = ticket.status;
+      document.getElementById("res-translation").textContent = ticket.translated_text || "(already in English)";
+      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    async function submitText() {
+      const text = document.getElementById("ticket-text").value.trim();
+      if (!text) { alert("Please enter ticket text."); return; }
+      const filename = document.getElementById("ticket-filename").value.trim() || `ticket_${Date.now()}.txt`;
+
+      setLoading("text", true);
+      try {
+        const resp = await fetch(`${ORCHESTRATOR}/api/pipeline/process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, filename }),
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || "Server error");
+        showResult(data.ticket);
+      } catch (e) {
+        showResult(e.message, true);
+      } finally {
+        setLoading("text", false);
+      }
+    }
+
+    async function submitFile() {
+      if (!chosenFile) { alert("Please choose a file first."); return; }
+      setLoading("file", true);
+
+      const formData = new FormData();
+      formData.append("file", chosenFile);
+
+      try {
+        const resp = await fetch(`${MODULE2}/api/tickets/upload`, { method: "POST", body: formData });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || "Upload failed");
+
+        // Now run the translation pipeline
+        const ticket = data.ticket;
+        const resp2 = await fetch(`${ORCHESTRATOR}/api/pipeline/process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            text: ticket.original_text, 
+            filename: ticket.filename,
+            ticket_id: ticket.id
+          }),
+        });
+        const data2 = await resp2.json();
+        if (!resp2.ok) throw new Error(data2.error || "Translation failed");
+        showResult(data2.ticket);
+      } catch (e) {
+        showResult(e.message, true);
+      } finally {
+        setLoading("file", false);
+      }
+    }
+  </script>
+</body>
+</html>

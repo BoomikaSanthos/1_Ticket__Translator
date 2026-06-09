@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reply to Ticket — SD-04 Translator</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+      --accent: #6c63ff; --accent2: #00d4a1; --text: #e8eaf0;
+      --muted: #8b90a0; --danger: #ff6b6b; --warn: #ffa94d;
+      --radius: 12px; --font: 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+    }
+    .logo { font-size: 20px; font-weight: 700; }
+    .logo span { color: var(--accent); }
+    nav { margin-left: auto; display: flex; gap: 4px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+    nav a:hover, nav a.active { color: var(--text); background: var(--border); }
+
+    main { max-width: 900px; margin: 40px auto; padding: 0 24px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 36px; }
+
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width: 640px) { .layout { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 18px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+    input[type="number"], textarea, select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: var(--font);
+      font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s;
+    }
+    textarea { resize: vertical; min-height: 120px; }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+
+    .form-group { margin-bottom: 18px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary  { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
+    .btn-primary:hover { background: #5a52e0; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 8px 14px; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Ticket preview panel */
+    .ticket-preview {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px; font-size: 13px;
+      line-height: 1.7; white-space: pre-wrap; color: var(--text);
+      min-height: 60px; margin-top: 4px;
+    }
+    .ticket-preview.empty { color: var(--muted); font-style: italic; }
+
+    .lang-badge {
+      display: inline-block; background: rgba(108,99,255,0.2);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+    }
+
+    .field-row { display: flex; gap: 12px; align-items: flex-end; }
+    .field-row > * { flex: 1; }
+    .field-row .btn-ghost { flex: 0 0 auto; margin-bottom: 0; align-self: flex-end; height: 42px; }
+
+    /* Result area */
+    .result { margin-top: 20px; display: none; }
+    .result-card {
+      background: rgba(0, 212, 161, 0.07);
+      border: 1px solid rgba(0, 212, 161, 0.25);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .result-card .r-title { font-size: 15px; font-weight: 700; color: var(--accent2); margin-bottom: 16px; }
+    .rrow { margin-bottom: 14px; }
+    .rrow .rlabel { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .rrow .rtext { font-size: 14px; line-height: 1.7; white-space: pre-wrap; background: var(--bg); padding: 10px 12px; border-radius: 6px; }
+
+    .error-card {
+      background: rgba(255, 107, 107, 0.07);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      border-radius: var(--radius); padding: 20px;
+      color: var(--danger);
+    }
+
+    /* Open tickets list */
+    .ticket-list { max-height: 340px; overflow-y: auto; }
+    .ticket-item {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background 0.1s; border-radius: 6px;
+    }
+    .ticket-item:hover { background: rgba(108,99,255,0.07); }
+    .ticket-item .t-id { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .ticket-item .t-lang { font-size: 11px; color: var(--muted); }
+    .ticket-item .t-preview { font-size: 13px; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+    .spinner { display:none; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Ticket<span>Lens</span></div>
+    <nav>
+      <a href="module1_submit.html">Submit</a>
+      <a href="module2_dashboard.html">Dashboard</a>
+      <a href="module3_reply.html" class="active">Reply</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Reply to a Ticket</h1>
+    <p class="subtitle">Select a ticket, write your reply in English, and we'll translate it back to the customer's language automatically.</p>
+
+    <div class="layout">
+      <!-- Left: Open tickets list -->
+      <div class="card">
+        <div class="card-title">📋 Open Tickets</div>
+        <div class="ticket-list" id="ticket-list">
+          <div style="color:var(--muted);font-size:14px;padding:20px 0;text-align:center">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Right: Reply form -->
+      <div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">🎫 Selected Ticket</div>
+
+          <div class="form-group">
+            <div class="field-row">
+              <div>
+                <label>Ticket ID</label>
+                <input type="number" id="ticket-id-input" placeholder="e.g. 3" min="1" oninput="onTicketIdChange()" />
+              </div>
+              <button class="btn btn-ghost" onclick="loadTicket()">Load</button>
+            </div>
+          </div>
+
+          <div class="form-group" id="ticket-lang-row" style="display:none">
+            <label>Customer Language</label>
+            <div style="margin-top:4px"><span class="lang-badge" id="ticket-lang-badge">—</span></div>
+          </div>
+
+          <div class="form-group">
+            <label>Original Text</label>
+            <div class="ticket-preview empty" id="ticket-original-preview">No ticket loaded. Select from the list or enter an ID.</div>
+          </div>
+
+          <div class="form-group">
+            <label>English Translation</label>
+            <div class="ticket-preview empty" id="ticket-translated-preview">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">💬 Write Reply</div>
+          <div class="form-group">
+            <label>Your Reply (English)</label>
+            <textarea id="reply-text" placeholder="Type your reply in English here. It will be translated to the customer's language automatically."></textarea>
+          </div>
+          <button class="btn btn-primary" id="btn-reply" onclick="sendReply()" disabled>
+            <div class="spinner" id="reply-spinner"></div>
+            <span id="reply-btn-label">Send Reply</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result-area">
+      <div class="result-card" id="result-card">
+        <div class="r-title">✅ Reply Sent & Translated</div>
+        <div class="rrow">
+          <div class="rlabel">Your Reply (English)</div>
+          <div class="rtext" id="res-en"></div>
+        </div>
+        <div class="rrow">
+          <div class="rlabel">Translated Reply <span id="res-lang-label"></span></div>
+          <div class="rtext" id="res-orig"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const MODULE2   = "http://127.0.0.1:5002";
+    const ORCHESTR  = "http://127.0.0.1:5003";
+    let selectedId  = null;
+    let selectedLang = "";
+
+    async function loadOpenTickets() {
+      try {
+        const resp = await fetch(`${MODULE2}/api/tickets?status=in_progress`);
+        const data = await resp.json();
+        const newResp = await fetch(`${MODULE2}/api/tickets?status=new`);
+        const newData = await newResp.json();
+        const all = [...(data.tickets || []), ...(newData.tickets || [])];
+        const list = document.getElementById("ticket-list");
+
+        if (!all.length) {
+          list.innerHTML = `<div style="color:var(--muted);font-size:14px;padding:20px 0;text-align:center">No open tickets.<br><a href="module1_submit.html" style="color:var(--accent)">Submit a ticket</a></div>`;
+          return;
+        }
+
+        list.innerHTML = all.map(t => `
+          <div class="ticket-item" onclick="selectTicket(${t.id}, '${escQ(t.original_text)}', '${escQ(t.translated_text || "")}', '${escQ(t.detected_lang || "")}')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="t-id">#${t.id}</span>
+              <span class="t-lang">${t.detected_lang || "Unknown"}</span>
+            </div>
+            <div class="t-preview">${escHtml(t.original_text)}</div>
+          </div>
+        `).join("");
+      } catch (e) {
+        document.getElementById("ticket-list").innerHTML =
+          `<div style="color:var(--muted);font-size:13px;padding:16px">⚠ Cannot connect to backend.<br>${e.message}</div>`;
+      }
+    }
+
+    function selectTicket(id, original, translated, lang) {
+      selectedId   = id;
+      selectedLang = lang;
+      document.getElementById("ticket-id-input").value = id;
+      document.getElementById("ticket-original-preview").textContent = original || "—";
+      document.getElementById("ticket-original-preview").classList.remove("empty");
+      document.getElementById("ticket-translated-preview").textContent = translated || "(not translated)";
+      document.getElementById("ticket-translated-preview").classList.remove("empty");
+      document.getElementById("ticket-lang-badge").textContent = lang || "Unknown";
+      document.getElementById("ticket-lang-row").style.display = "block";
+      document.getElementById("btn-reply").disabled = false;
+      document.getElementById("result-area").style.display = "none";
+    }
+
+    async function loadTicket() {
+      const id = document.getElementById("ticket-id-input").value.trim();
+      if (!id) { alert("Enter a ticket ID."); return; }
+      try {
+        const resp = await fetch(`${MODULE2}/api/tickets/${id}`);
+        if (!resp.ok) { alert("Ticket not found."); return; }
+        const data = await resp.json();
+        const t = data.ticket;
+        selectTicket(t.id, t.original_text, t.translated_text, t.detected_lang);
+      } catch (e) { alert("Error: " + e.message); }
+    }
+
+    function onTicketIdChange() {
+      // Don't auto-load, wait for "Load" button
+    }
+
+    async function sendReply() {
+      const reply = document.getElementById("reply-text").value.trim();
+      if (!reply) { alert("Please enter a reply."); return; }
+      if (!selectedId) { alert("Please select a ticket first."); return; }
+
+      // Loading state
+      document.getElementById("reply-spinner").style.display = "inline-block";
+      document.getElementById("btn-reply").disabled = true;
+      document.getElementById("reply-btn-label").textContent = "Translating…";
+      document.getElementById("result-area").style.display = "none";
+
+      try {
+        const resp = await fetch(`${ORCHESTR}/api/pipeline/reply`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticket_id: selectedId, reply_english: reply }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.success) throw new Error(data.error || "Server error");
+
+        // Show result
+        document.getElementById("res-en").textContent   = data.reply_english;
+        document.getElementById("res-orig").textContent = data.reply_original;
+        document.getElementById("res-lang-label").textContent = `(${data.language})`;
+        document.getElementById("result-card").className = "result-card";
+
+        const area = document.getElementById("result-area");
+        area.style.display = "block";
+        area.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        // Reset form
+        document.getElementById("reply-text").value = "";
+        loadOpenTickets(); // refresh list
+      } catch (e) {
+        document.getElementById("result-area").style.display = "block";
+        document.getElementById("result-card").outerHTML =
+          `<div class="error-card" id="result-card">❌ Error: ${escHtml(e.message)}</div>`;
+      } finally {
+        document.getElementById("reply-spinner").style.display = "none";
+        document.getElementById("btn-reply").disabled = false;
+        document.getElementById("reply-btn-label").textContent = "Send Reply";
+      }
+    }
+
+    function escHtml(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function escQ(s)    { return (s||"").replace(/'/g,"\\'").replace(/\n/g," ").substring(0, 200); }
+
+    loadOpenTickets();
+  </script>
+</body>
+</html>
